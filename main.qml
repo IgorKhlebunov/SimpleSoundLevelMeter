@@ -35,18 +35,19 @@ Rectangle {
             left: parent.left
             bottom: parent.bottom
             leftMargin: 10
-            bottomMargin: 20
+            bottomMargin: 10
         }
 
-        width: parent.width / 8
-        height: parent.height / 2
+        width: parent.width / 10
+        height: parent.height / 3
         spacing: 5
 
         Repeater {
+            id: blockRepeater
             anchors.fill: parent
                 Rectangle {
                     width: parent.width - 4
-                    height: (parent.height / 15) - 4
+                    height: (parent.height / 10) - 4
                     radius: 3
 
                     color: "green"
@@ -55,9 +56,18 @@ Rectangle {
                         ColorAnimation {duration: 200}
                     }
                 }
-            model: 15
+            model: 10
         }
     }
 
+    Connections {
+        target: wrapper
 
+        onDbChanged: {
+            var items = Math.floor(Math.abs(level + 2))
+            for(var i = 0; i < blockRepeater.count; ++i) {
+                blockRepeater.itemAt(i).color = (i > items) ? "red" : "green"
+            }
+        }
+    }
 }
