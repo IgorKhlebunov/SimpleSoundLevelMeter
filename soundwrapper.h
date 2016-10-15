@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <qaudioinput.h>
+#include <QTimer>
 
 class SoundWrapper : public QObject
 {
@@ -34,6 +35,7 @@ public Q_SLOTS:
 
 private Q_SLOTS:
     void readMore();
+    void timeOut();
 
 private:
     QAudioDeviceInfo m_Inputdevice;
@@ -41,4 +43,7 @@ private:
     QAudioInput *m_audioInput = nullptr;
     QIODevice *m_input = nullptr;
     float m_db = 0.0f;
+    QTimer m_timer;
+    int m_sumPercents = 0;
+    int m_count = 0;
 };

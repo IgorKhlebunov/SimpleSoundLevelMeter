@@ -10,6 +10,7 @@ static const float maxValue = 32768.0f;
 SoundWrapper::SoundWrapper(QObject *parent)
     : QObject(parent)
     , m_Inputdevice(QAudioDeviceInfo::defaultInputDevice())
+    , m_timer(this)
 {
     init();
 }
@@ -33,6 +34,14 @@ void SoundWrapper::init()
     m_format.setSampleType(QAudioFormat::UnSignedInt );
     m_format.setByteOrder(QAudioFormat::LittleEndian);
     m_format.setCodec(Settings::instance().codec());
+
+    m_timer.setInterval(300);
+    connect(&m_timer, &QTimer::timeout, this, [this] () {
+        if (m_count)
+            emit sendToServer(QString::number(m_sumPercents/m_count));
+        m_count = 0;
+        m_sumPercents = 0;
+    });
 }
 
 void SoundWrapper::initUi()
@@ -103,10 +112,15 @@ void SoundWrapper::start()
 
     m_input = m_audioInput->start();
     connect(m_input, &QIODevice::readyRead, this, &SoundWrapper::readMore);
+
+    m_timer.start();
 }
 
 void SoundWrapper::stop()
 {
+    m_timer.stop();
+    m_count = 0;
+    m_sumPercents = 0;
     m_audioInput->stop();
 
     if (m_input) {
@@ -132,13 +146,20 @@ void SoundWrapper::readMore()
 
     emit dbChanged(m_db);
 
-    qint32 procents = (qint32)(m_db * 10) + 100;
+    qint32 percents = (qint32)(m_db * 10) + 100;
 
-    if (procents < 0)
-        procents = 0;
+    if (percents < 0)
+        percents = 0;
 
-    if (procents > 100)
-        procents = 100;
+    if (percents > 100)
+        percents = 100;
 
-    emit sendToServer(QString::number(procents));
+    m_sumPercents += percents;
+    ++m_count;
+    //    emit sendToServer(QString::number(procents));
+}
+
+void SoundWrapper::timeOut()
+{
+
 }
