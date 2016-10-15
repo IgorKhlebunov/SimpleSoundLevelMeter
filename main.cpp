@@ -1,5 +1,4 @@
 #include <QApplication>
-#include <QQmlApplicationEngine>
 #include "mainquickview.h"
 #include "soundwrapper.h"
 #include "server.h"

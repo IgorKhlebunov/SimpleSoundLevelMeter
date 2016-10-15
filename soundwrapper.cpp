@@ -9,7 +9,7 @@ static const float maxValue = 32768.0f;
 
 SoundWrapper::SoundWrapper(QObject *parent)
     : QObject(parent)
-    ,   m_Inputdevice(QAudioDeviceInfo::defaultInputDevice())
+    , m_Inputdevice(QAudioDeviceInfo::defaultInputDevice())
 {
     init();
 }
@@ -73,7 +73,7 @@ float SoundWrapper::calculateDecibels(qint16 *data, qint32 dataSize)
 {
     float sum = 0.0f;
 
-    for (qint64 i = 0; i < dataSize; ++i) {
+    for (qint32 i = 0; i < dataSize; ++i) {
         float sample = data[i] / maxValue;
         sum += (sample * sample);
     }
@@ -98,9 +98,7 @@ void SoundWrapper::readMore()
     const qint64 len = m_audioInput->bytesReady();
     QByteArray buffer(len, 0);
 
-    const qint64 l = m_input->read(buffer.data(), len);
-
-    if (l <= 0)
+    if (m_input->read(buffer.data(), len) <= 0)
         return;
 
     m_db = calculateDecibels(reinterpret_cast<short*>(buffer.data()), len/2);
