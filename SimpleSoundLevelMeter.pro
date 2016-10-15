@@ -1,13 +1,15 @@
 TEMPLATE = app
 
 QT += qml quick widgets \
-    multimedia
+    multimedia websockets
 
 CONFIG += c++11
 
 SOURCES += main.cpp \
     mainquickview.cpp \
-    soundwrapper.cpp
+    soundwrapper.cpp \
+    server.cpp \
+    settings.cpp
 
 RESOURCES += qml.qrc
 
@@ -19,4 +21,6 @@ include(deployment.pri)
 
 HEADERS += \
     mainquickview.h \
-    soundwrapper.h
+    soundwrapper.h \
+    server.h \
+    settings.h

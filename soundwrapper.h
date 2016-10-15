@@ -1,9 +1,6 @@
 #pragma once
 #include <QObject>
-#include <QByteArray>
 #include <qaudioinput.h>
-#include<qaudiooutput.h>
-#include <QBuffer>
 
 class SoundWrapper : public QObject
 {
@@ -21,6 +18,7 @@ signals:
     void setQmlVariantProperty(const QString &name, const QVariant &value);
     void setQmlObjectProperty(const QString &name, QObject *value);
     void dbChanged(float level);
+    void sendToServer(const QString &message);
 
 public slots:
     void start();
@@ -31,7 +29,5 @@ private:
     QAudioFormat m_format;
     QAudioInput *m_audioInput = nullptr;
     QIODevice *m_input = nullptr;
-    QByteArray m_buffer;
-    int m_iVolume = 0;
     float m_db = 0.0f;
 };

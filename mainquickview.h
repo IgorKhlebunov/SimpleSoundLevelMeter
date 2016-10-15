@@ -3,7 +3,6 @@
 #include <QObject>
 #include <QQuickView>
 #include <QQmlContext>
-#include <QDebug>
 
 class MainQuickView : public QQuickView
 {
@@ -17,7 +16,6 @@ public slots:
 private:
     template<class T>
     void setQmlPrivateProperty(const QString &name, const T& value) {
-        qDebug() << name << value;
         auto root = rootContext();
         root->setContextProperty(name, value);
     }

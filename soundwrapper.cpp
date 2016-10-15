@@ -1,14 +1,25 @@
 #include "soundwrapper.h"
+#include "settings.h"
 #include <math.h>
-#include <QDebug>
+#include <QByteArray>
 
-static const int bufferSize = 14096;
+#include <QDebug>
 
 SoundWrapper::SoundWrapper(QObject *parent)
     : QObject(parent)
     ,   m_Inputdevice(QAudioDeviceInfo::defaultInputDevice())
-    ,   m_buffer(bufferSize, 0)
 {
+    const auto deviceName = Settings::instance().deviceName();
+
+    if (m_Inputdevice.deviceName() != deviceName) {
+        foreach (const auto dev, QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
+            if (dev.deviceName() == deviceName) {
+                m_Inputdevice = dev;
+                break;
+            }
+        }
+    }
+
     init();
 }
 
@@ -22,14 +33,14 @@ SoundWrapper::~SoundWrapper()
 
 void SoundWrapper::init()
 {
-    m_format.setSampleRate(8000);
-    m_format.setChannelCount(1);
-    m_format.setSampleSize(16);
+    m_format.setSampleRate(Settings::instance().rate());
+    m_format.setChannelCount(Settings::instance().channelCount());
+    m_format.setSampleSize(Settings::instance().sampleSize());
     m_format.setSampleType(QAudioFormat::UnSignedInt );
     m_format.setByteOrder(QAudioFormat::LittleEndian);
-    m_format.setCodec("audio/pcm");
+    m_format.setCodec(Settings::instance().codec());
 
-    QAudioDeviceInfo infoIn(QAudioDeviceInfo::defaultInputDevice());
+    QAudioDeviceInfo infoIn(m_Inputdevice);
 
     if (!infoIn.isFormatSupported(m_format))
         m_format = infoIn.nearestFormat(m_format);
@@ -59,26 +70,25 @@ void SoundWrapper::readMore()
     if (!m_audioInput)
         return;
 
-    qint64 len = m_audioInput->bytesReady();
+    const qint64 len = m_audioInput->bytesReady();
+    QByteArray buffer(len, 0);
 
-    if (len > 4096)
-        len = 4096;
-
-    qint64 l = m_input->read(m_buffer.data(), len);
+    const qint64 l = m_input->read(buffer.data(), len);
 
     if (l <= 0)
         return;
 
-    short* resultingData = reinterpret_cast<short*>(m_buffer.data());
+    short *data = reinterpret_cast<short*>(buffer.data());
+    float sum = 0.0f;
 
-    float sum = 0;
-    for (qint64 i = 0; i < l; ++i) {
-        float sample = resultingData[i] / 32768.0f;
+    for (qint64 i = 0; i < len/2; ++i) {
+        float sample = data[i] / 32768.0f;
         sum += (sample * sample);
     }
 
-    double rms = sqrt(sum / l);
+    const double rms = sqrt(sum / (len/2));
     m_db = 20 * log10(rms);
 
     emit dbChanged(m_db);
+    emit sendToServer(QString::number(m_db));
 }

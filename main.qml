@@ -2,7 +2,8 @@ import QtQuick 2.7
 import QtQuick.Controls 1.5
 
 Rectangle {
-    color: "white"
+    id: root
+
     Label {
         id: dbValue
         font {
@@ -12,22 +13,6 @@ Rectangle {
         text: wrapper.db
         color: "red"
         anchors.centerIn: parent
-    }
-
-    Label {
-        anchors {
-            top: dbValue.bottom
-            horizontalCenter: parent.horizontalCenter
-
-            topMargin: 20
-        }
-
-        font {
-            pixelSize: 25
-        }
-
-        text: Math.floor(Math.abs(wrapper.db))
-        color: "red"
     }
 
     Column {
@@ -64,9 +49,9 @@ Rectangle {
         target: wrapper
 
         onDbChanged: {
-            var items = Math.floor(Math.abs(level + 2))
+            var value = Math.floor(Math.abs(level))
             for(var i = 0; i < blockRepeater.count; ++i) {
-                blockRepeater.itemAt(i).color = (i > items) ? "red" : "green"
+                blockRepeater.itemAt(i).color = (i > value) ? "red" : "green"
             }
         }
     }
