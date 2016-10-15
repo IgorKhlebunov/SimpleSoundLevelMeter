@@ -5,7 +5,6 @@
 
 #include <QDebug>
 
-
 static const float maxValue = 32768.0f;
 
 SoundWrapper::SoundWrapper(QObject *parent)
@@ -70,6 +69,20 @@ void SoundWrapper::initAudioDeviceInfo()
     }
 }
 
+float SoundWrapper::calculateDecibels(qint16 *data, qint32 dataSize)
+{
+    float sum = 0.0f;
+
+    for (qint64 i = 0; i < dataSize; ++i) {
+        float sample = data[i] / maxValue;
+        sum += (sample * sample);
+    }
+
+    const qreal rms = sqrt(sum / dataSize);
+
+    return (20 * log10(rms));
+}
+
 void SoundWrapper::start()
 {
     emit setQmlObjectProperty("wrapper", this);
@@ -90,17 +103,7 @@ void SoundWrapper::readMore()
     if (l <= 0)
         return;
 
-    const qint64 num = len/2;
-    short *data = reinterpret_cast<short*>(buffer.data());
-    float sum = 0.0f;
-
-    for (qint64 i = 0; i < num; ++i) {
-        float sample = data[i] / maxValue;
-        sum += (sample * sample);
-    }
-
-    const double rms = sqrt(sum / num);
-    m_db = 20 * log10(rms);
+    m_db = calculateDecibels(reinterpret_cast<short*>(buffer.data()), len/2);
 
     emit dbChanged(m_db);
     emit sendToServer(QString::number(m_db));

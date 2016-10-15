@@ -15,6 +15,7 @@ private:
     void createAudioInput();
     void initAudioDeviceInfo();
     inline float db() const { return m_db; }
+    float calculateDecibels(qint16 *data, qint32 dataSize);
 
 signals:
     void setQmlVariantProperty(const QString &name, const QVariant &value);
