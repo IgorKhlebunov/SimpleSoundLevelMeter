@@ -5,21 +5,13 @@
 
 #include <QDebug>
 
+
+static const float maxValue = 32768.0f;
+
 SoundWrapper::SoundWrapper(QObject *parent)
     : QObject(parent)
     ,   m_Inputdevice(QAudioDeviceInfo::defaultInputDevice())
 {
-    const auto deviceName = Settings::instance().deviceName();
-
-    if (m_Inputdevice.deviceName() != deviceName) {
-        foreach (const auto dev, QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
-            if (dev.deviceName() == deviceName) {
-                m_Inputdevice = dev;
-                break;
-            }
-        }
-    }
-
     init();
 }
 
@@ -33,6 +25,8 @@ SoundWrapper::~SoundWrapper()
 
 void SoundWrapper::init()
 {
+    initAudioDeviceInfo();
+
     m_format.setSampleRate(Settings::instance().rate());
     m_format.setChannelCount(Settings::instance().channelCount());
     m_format.setSampleSize(Settings::instance().sampleSize());
@@ -58,6 +52,24 @@ void SoundWrapper::createAudioInput()
     m_audioInput = new QAudioInput(m_Inputdevice, m_format, this);
 }
 
+void SoundWrapper::initAudioDeviceInfo()
+{
+    const auto deviceName = Settings::instance().deviceName();
+
+    if (deviceName.isEmpty()) {
+        return;
+    }
+
+    if (m_Inputdevice.deviceName() != deviceName) {
+        foreach (const auto dev, QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
+            if (dev.deviceName() == deviceName) {
+                m_Inputdevice = dev;
+                break;
+            }
+        }
+    }
+}
+
 void SoundWrapper::start()
 {
     emit setQmlObjectProperty("wrapper", this);
@@ -78,15 +90,16 @@ void SoundWrapper::readMore()
     if (l <= 0)
         return;
 
+    const qint64 num = len/2;
     short *data = reinterpret_cast<short*>(buffer.data());
     float sum = 0.0f;
 
-    for (qint64 i = 0; i < len/2; ++i) {
-        float sample = data[i] / 32768.0f;
+    for (qint64 i = 0; i < num; ++i) {
+        float sample = data[i] / maxValue;
         sum += (sample * sample);
     }
 
-    const double rms = sqrt(sum / (len/2));
+    const double rms = sqrt(sum / num);
     m_db = 20 * log10(rms);
 
     emit dbChanged(m_db);

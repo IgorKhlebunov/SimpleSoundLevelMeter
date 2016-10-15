@@ -34,7 +34,7 @@ QString Settings::codec() const
 
 QString Settings::deviceName() const
 {
-    return m_settings.value("Sound/device", "H2n").toString();
+    return m_settings.value("Sound/device", "").toString();
 }
 
 Settings::Settings()

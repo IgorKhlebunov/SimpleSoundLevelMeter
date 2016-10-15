@@ -13,9 +13,9 @@ Server::Server(QObject *parent)
         , m_clients()
 {
     if (m_pWebSocketServer->listen(QHostAddress::Any, Settings::instance().port())) {
-            connect(m_pWebSocketServer, &QWebSocketServer::newConnection,
-                    this, &Server::onNewConnection);
-            connect(m_pWebSocketServer, &QWebSocketServer::closed, this, &Server::closed);
+        connect(m_pWebSocketServer, &QWebSocketServer::newConnection,
+                this, &Server::onNewConnection);
+        connect(m_pWebSocketServer, &QWebSocketServer::closed, this, &Server::closed);
     }
 }
 

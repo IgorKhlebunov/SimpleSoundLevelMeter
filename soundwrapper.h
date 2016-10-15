@@ -13,7 +13,9 @@ public:
 private:
     void init();
     void createAudioInput();
+    void initAudioDeviceInfo();
     inline float db() const { return m_db; }
+
 signals:
     void setQmlVariantProperty(const QString &name, const QVariant &value);
     void setQmlObjectProperty(const QString &name, QObject *value);

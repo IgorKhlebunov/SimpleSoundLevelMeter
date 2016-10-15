@@ -2,7 +2,6 @@
 
 #include <QObject>
 #include <QList>
-#include <QByteArray>
 
 QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
