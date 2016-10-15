@@ -37,6 +37,8 @@ void Server::onNewConnection()
     qDebug() << __func__;
     auto socket = m_pWebSocketServer->nextPendingConnection();
 
+    emit consoleMessage("New connection!");
+
     connect(socket, &QWebSocket::textMessageReceived, this, &Server::processTextMessage);
     connect(socket, &QWebSocket::binaryMessageReceived, this, &Server::processBinaryMessage);
     connect(socket, &QWebSocket::disconnected, this, &Server::socketDisconnected);
@@ -69,6 +71,7 @@ void Server::processBinaryMessage(const QByteArray &message)
 void Server::socketDisconnected()
 {
     qDebug() << __func__;
+    emit consoleMessage("disconnect!");
 
     auto client = qobject_cast<QWebSocket *>(sender());
 

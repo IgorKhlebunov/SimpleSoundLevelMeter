@@ -4,23 +4,91 @@ import QtQuick.Controls 1.5
 Rectangle {
     id: root
 
+    ComboBox {
+        id: inputDevices
+
+        anchors {
+            top: parent.top
+            left: parent.left
+
+            margins: 20
+        }
+
+        width: 200
+        model: wrapper.inputDevices
+        enabled: !startButton.isStart
+
+        onCurrentIndexChanged: {
+            wrapper.changeInputDevice(currentText)
+        }
+    }
+
+    Button {
+        id: updateButton
+
+        anchors {
+            top: parent.top
+            left: inputDevices.right
+            margins: 20
+        }
+
+        enabled: !startButton.isStart
+
+        text: "Update"
+
+        onClicked: {
+            wrapper.updateInputDevices()
+        }
+    }
+
+    Button {
+        id: startButton
+
+        anchors {
+            top: parent.top
+            left: updateButton.right
+            margins: 20
+        }
+
+        property bool isStart:  false
+
+        text: isStart ? "Stop" : "Start"
+
+        onClicked: {
+            isStart = !isStart
+
+            if (isStart) {
+                wrapper.start()
+            }
+            else {
+                wrapper.stop()
+            }
+        }
+    }
+
     Label {
         id: dbValue
+        anchors {
+            left: soundMeter.right
+            verticalCenter: soundMeter.verticalCenter
+            leftMargin: 20
+        }
+
         font {
             pixelSize: 25
         }
 
-        text: wrapper.db
+        text: Math.floor(((wrapper.db * 10) + 100))
         color: "red"
-        anchors.centerIn: parent
     }
 
     Column {
+        id: soundMeter
         anchors {
+            top: inputDevices.bottom
             left: parent.left
-            bottom: parent.bottom
-            leftMargin: 10
-            bottomMargin: 10
+            leftMargin: 20
+            topMargin: 20
         }
 
         width: parent.width / 10
@@ -45,6 +113,23 @@ Rectangle {
         }
     }
 
+
+    TextArea {
+        id: terminal
+
+        anchors {
+            top: soundMeter.bottom
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+
+            margins: 20
+        }
+
+        readOnly: true
+
+    }
+
     Connections {
         target: wrapper
 
@@ -53,6 +138,14 @@ Rectangle {
             for(var i = 0; i < blockRepeater.count; ++i) {
                 blockRepeater.itemAt(i).color = (i > value) ? "red" : "green"
             }
+        }
+    }
+
+    Connections {
+        target: server
+
+        onConsoleMessage: {
+            terminal.append(message)
         }
     }
 }

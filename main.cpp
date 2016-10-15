@@ -10,19 +10,17 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
+    MainQuickView view;
     SoundWrapper soundWrapper;
     Server server;
-    MainQuickView view;
 
     QObject::connect(&soundWrapper, &SoundWrapper::setQmlObjectProperty,
                      &view, &MainQuickView::setQmlObjectProperty);
-    QObject::connect(&soundWrapper, &SoundWrapper::setQmlVariantProperty,
-                     &view, &MainQuickView::setQmlVariantProperty);
     QObject::connect(&soundWrapper, &SoundWrapper::sendToServer,
                      &server, &Server::sendToClient);
 
-    soundWrapper.start();
-
+    view.setQmlObjectProperty("server", &server);
+    soundWrapper.initUi();
     view.setSource(QUrl(QStringLiteral("qrc:/main.qml")));
     view.resize(defaultWidth, defaultHeight);
     view.show();

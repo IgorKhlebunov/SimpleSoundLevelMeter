@@ -16,6 +16,7 @@ public:
 Q_SIGNALS:
     void closed();
     void readyToSendData();
+    void consoleMessage(const QString &message);
 
 public Q_SLOTS:
     void sendToClient(const QString &message);

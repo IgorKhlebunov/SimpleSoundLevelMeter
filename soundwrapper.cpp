@@ -16,6 +16,9 @@ SoundWrapper::SoundWrapper(QObject *parent)
 
 SoundWrapper::~SoundWrapper()
 {
+    if (!m_audioInput)
+        return;
+
     if (m_audioInput->state() != QAudio::StoppedState)
         m_audioInput->stop();
 
@@ -24,21 +27,17 @@ SoundWrapper::~SoundWrapper()
 
 void SoundWrapper::init()
 {
-    initAudioDeviceInfo();
-
     m_format.setSampleRate(Settings::instance().rate());
     m_format.setChannelCount(Settings::instance().channelCount());
     m_format.setSampleSize(Settings::instance().sampleSize());
     m_format.setSampleType(QAudioFormat::UnSignedInt );
     m_format.setByteOrder(QAudioFormat::LittleEndian);
     m_format.setCodec(Settings::instance().codec());
+}
 
-    QAudioDeviceInfo infoIn(m_Inputdevice);
-
-    if (!infoIn.isFormatSupported(m_format))
-        m_format = infoIn.nearestFormat(m_format);
-
-    createAudioInput();
+void SoundWrapper::initUi()
+{
+    emit setQmlObjectProperty("wrapper", this);
 }
 
 void SoundWrapper::createAudioInput()
@@ -49,24 +48,6 @@ void SoundWrapper::createAudioInput()
     }
 
     m_audioInput = new QAudioInput(m_Inputdevice, m_format, this);
-}
-
-void SoundWrapper::initAudioDeviceInfo()
-{
-    const auto deviceName = Settings::instance().deviceName();
-
-    if (deviceName.isEmpty()) {
-        return;
-    }
-
-    if (m_Inputdevice.deviceName() != deviceName) {
-        foreach (const auto dev, QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
-            if (dev.deviceName() == deviceName) {
-                m_Inputdevice = dev;
-                break;
-            }
-        }
-    }
 }
 
 float SoundWrapper::calculateDecibels(qint16 *data, qint32 dataSize)
@@ -83,11 +64,57 @@ float SoundWrapper::calculateDecibels(qint16 *data, qint32 dataSize)
     return (20 * log10(rms));
 }
 
+QStringList SoundWrapper::inputDevices() const
+{
+    QStringList list;
+
+    foreach (const auto dev, QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
+        list << dev.deviceName();
+    }
+
+    return list;
+}
+
+void SoundWrapper::changeInputDevice(const QString &name)
+{
+    if (m_Inputdevice.deviceName() != name) {
+        foreach (const auto dev, QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
+            if (dev.deviceName() == name) {
+                m_Inputdevice = dev;
+                break;
+            }
+        }
+    }
+}
+
+void SoundWrapper::updateInputDevices()
+{
+    emit inputDevicesChanged();
+}
+
 void SoundWrapper::start()
 {
-    emit setQmlObjectProperty("wrapper", this);
+    QAudioDeviceInfo infoIn(m_Inputdevice);
+
+    if (!infoIn.isFormatSupported(m_format))
+        m_format = infoIn.nearestFormat(m_format);
+
+    createAudioInput();
+
     m_input = m_audioInput->start();
     connect(m_input, &QIODevice::readyRead, this, &SoundWrapper::readMore);
+}
+
+void SoundWrapper::stop()
+{
+    m_audioInput->stop();
+
+    if (m_input) {
+        disconnect(m_input, nullptr, this, nullptr);
+        m_input = nullptr;
+        delete m_audioInput;
+        m_audioInput = nullptr;
+    }
 }
 
 void SoundWrapper::readMore()
@@ -104,5 +131,14 @@ void SoundWrapper::readMore()
     m_db = calculateDecibels(reinterpret_cast<short*>(buffer.data()), len/2);
 
     emit dbChanged(m_db);
-    emit sendToServer(QString::number(m_db));
+
+    qint32 procents = (qint32)(m_db * 10) + 100;
+
+    if (procents < 0)
+        procents = 0;
+
+    if (procents > 100)
+        procents = 100;
+
+    emit sendToServer(QString::number(procents));
 }
